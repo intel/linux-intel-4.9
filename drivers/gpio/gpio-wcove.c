@@ -54,6 +54,12 @@
 #define UPDATE_IRQ_TYPE		BIT(0)
 #define UPDATE_IRQ_MASK		BIT(1)
 
+#define GPIO0P0CTLO		0x4e44
+#define GPIO0P0CTLI		0x4e51
+#define GPIO1P0CTLO		0x4e4b
+#define GPIO1P0CTLI		0x4e58
+#define GPIO2P0CTLO		0x4e4f
+#define GPIO2P0CTLI		0x4e5c
 #define CTLI_INTCNT_DIS		(0 << 1)
 #define CTLI_INTCNT_NE		(1 << 1)
 #define CTLI_INTCNT_PE		(2 << 1)
@@ -106,19 +112,24 @@ struct wcove_gpio {
 static inline unsigned int to_reg(int gpio, enum ctrl_register reg_type)
 {
 	unsigned int reg;
-	int bank;
 
-	if (gpio < BANK0_NR_PINS)
-		bank = 0;
-	else if (gpio < BANK0_NR_PINS + BANK1_NR_PINS)
-		bank = 1;
-	else
-		bank = 2;
-
-	if (reg_type == CTRL_IN)
-		reg = GPIO_IN_CTRL_BASE + bank;
-	else
-		reg = GPIO_OUT_CTRL_BASE + bank;
+	if (reg_type == CTRL_IN) {
+		if (gpio < BANK0_NR_PINS)
+			reg = GPIO0P0CTLI + gpio;
+		else if (gpio < (BANK0_NR_PINS + BANK1_NR_PINS))
+			reg = GPIO1P0CTLI + (gpio % BANK0_NR_PINS);
+		else
+			reg = GPIO2P0CTLI + (gpio %
+					     (BANK0_NR_PINS + BANK1_NR_PINS));
+	} else {
+		if (gpio < BANK0_NR_PINS)
+			reg = GPIO0P0CTLO + gpio;
+		else if (gpio < (BANK0_NR_PINS + BANK1_NR_PINS))
+			reg = GPIO1P0CTLO + (gpio % BANK0_NR_PINS);
+		else
+			reg = GPIO2P0CTLO + (gpio %
+					     (BANK0_NR_PINS + BANK1_NR_PINS));
+	}
 
 	return reg;
 }
