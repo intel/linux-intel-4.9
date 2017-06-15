@@ -1391,13 +1391,14 @@ static void reset_common_ring(struct intel_engine_cs *engine,
 		return;
 
 	/* Catch up with any missed context-switch interrupts */
-	if (request->ctx != port[0].request->ctx) {
-		i915_gem_request_put(port[0].request);
-		port[0] = port[1];
-		memset(&port[1], 0, sizeof(port[1]));
+	if(port && port[0].request) {
+		if (request->ctx != port[0].request->ctx) {
+			i915_gem_request_put(port[0].request);
+			port[0] = port[1];
+			memset(&port[1], 0, sizeof(port[1]));
+		}
+		GEM_BUG_ON(request->ctx != port[0].request->ctx);
 	}
-
-	GEM_BUG_ON(request->ctx != port[0].request->ctx);
 
 	/* Reset WaIdleLiteRestore:bdw,skl as well */
 	request->tail = request->wa_tail - WA_TAIL_DWORDS * sizeof(u32);
